@@ -15,3 +15,6 @@
         {{ $list->links() }}
     </div>
 @endif
+<p>
+    <strong>This is line for test</strong>
+</p>
