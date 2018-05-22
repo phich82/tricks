@@ -24,16 +24,9 @@ class UpdateBookingTest extends TestCase
     use StubSSOData;
 
     /**
-     * @var $url
-     */
-    private static $url;
-
-    /**
      * @var bookingRepository
      */
     private $bookingRepo;
-
-    private $api;
 
     /**
      * @inheritDoc
@@ -43,7 +36,6 @@ class UpdateBookingTest extends TestCase
         parent::setUp();
 
         $this->bookingRepo = new BookingRepository();
-        self::$url = route('traveler.mypage.booking.edit');
         self::fakeSessionSSO();
     }
 
@@ -69,27 +61,102 @@ class UpdateBookingTest extends TestCase
 
     public function test21RedirectToMyPageScreenWhenBookingEmpty()
     {
+        $params = [
+            'booking_id'   => 'VELTRA-5YJOYFNT',
+            'activity_id'  => 'VELTRA-100010679',
+            'plan_id'      => 'VELTRA-108951-0',
+        ];
+        $idWrong = 'blablabla';
+        $this->createBookingByDateAndParams(date('Y-m-d'), $params);
+        $this->createBookingLog('VELTRA-5YJOYFNT');
 
+        $this->get($this->getUrlById($idWrong))
+             ->assertSee('Header Text Of MyPage Screen');
     }
 
     public function test22RedirectToBookingDetailPagenWhenParticipationDateLowerCurrentDate()
     {
-        
+        $params = [
+            'booking_id'   => 'VELTRA-5YJOYFNT',
+            'activity_id'  => 'VELTRA-100010679',
+            'plan_id'      => 'VELTRA-108951-0',
+        ];
+        $idWrong = 'blablabla';
+        $this->createBookingByDateAndParams(date('Y-m-d'), $params);
+        $this->createBookingLog('VELTRA-5YJOYFNT');
+
+        $this->get($this->getUrlById($idWrong))
+             ->assertSee('Header Text Of MyPage Screen');
+    }
+
+    public function test23RedirectToMyPageScreenWhenClickOnLinkGoBackListScreen()
+    {
+        $params = [
+            'booking_id'   => 'VELTRA-5YJOYFNT',
+            'activity_id'  => 'VELTRA-100010679',
+            'plan_id'      => 'VELTRA-108951-0',
+        ];
+        $idWrong = 'VELTRA-5YJOYFNT';
+        $this->createBookingByDateAndParams(date('Y-m-d'), $params);
+        $this->createBookingLog('VELTRA-5YJOYFNT');
+
+        $this->get(route('traveler.mypage.index'))
+             ->assertSee('Header Text Of MyPage Screen');
     }
 
     public function test23RedirectToBookingDetailPagenWhenClickOnLinkGoBackDetailScreen()
     {
+        $idBooking = 'VELTRA-5YJOYFNT';
+        $params = [
+            'booking_id'   => $idBooking,
+            'activity_id'  => 'VELTRA-100010679',
+            'plan_id'      => 'VELTRA-108951-0',
+            'participation_date' => date('Y-m-d', strtotime(date('Y-m-d')) - 2*24*60*60)
+        ];
+        $this->createBookingByDateAndParams(date('Y-m-d'), $params);
+        $this->createBookingLog($idBooking);
+
+        $this->get($this->getUrlById($idBooking))
+             ->assertSee('Header Text Of UpdateBooking Screen');
         
+        $this->get(route('traveler.mypage.booking.detail', [$idBooking]))
+             ->assertSee('Header Text Of Booking Details Screen');
     }
 
     public function test241DisplayBookingInformation()
     {
-        
+        $idBooking = 'VELTRA-5YJOYFNT';
+        $params = [
+            'booking_id'   => $idBooking,
+            'activity_id'  => 'VELTRA-100010679',
+            'plan_id'      => 'VELTRA-108951-0',
+            'participation_date' => date('Y-m-d', strtotime(date('Y-m-d')) - 2*24*60*60)
+        ];
+        $this->createBookingByDateAndParams(date('Y-m-d'), $params);
+        $this->createBookingLog('VELTRA-5YJOYFNT');
+
+        $this->get($this->getUrlById($idBooking))
+             ->assertSee('Header Text Of UpdateBooking Screen')
+             ->assertSee($params['booking_id']);
     }
 
     public function test242DisplayBookingLogInformation()
     {
-        
+        $idBooking = 'VELTRA-5YJOYFNT';
+        $params = [
+            'booking_id'   => $idBooking,
+            'activity_id'  => 'VELTRA-100010679',
+            'plan_id'      => 'VELTRA-108951-0',
+            'participation_date' => date('Y-m-d', strtotime(date('Y-m-d')) - 2*24*60*60)
+        ];
+        $this->createBookingByDateAndParams(date('Y-m-d'), $params);
+        $bookingLog = $this->createBookingLog('VELTRA-5YJOYFNT', true);
+
+        $this->get($this->getUrlById($idBooking))
+             ->assertSee($bookingLog['date_time'])
+             ->assertSee($bookingLog['log_name'])
+             ->assertSee($bookingLog['user'])
+             ->assertSee($bookingLog['memo']);
     }
 
     public function test25DisplayRequiredMarkText()
@@ -277,11 +344,11 @@ class UpdateBookingTest extends TestCase
             'guest_flag'            => 1,
             'first_name'            => $params['first_name'] ?? 'Steven',
             'last_name'             => $params['last_name']  ?? 'Nguyen',
-            'email'                 => $params['email']      ?? 'fake@gmail.com',
+            'email'                 => $params['email']      ?? 'stevennguyen@gmail.com',
             'contact_mail'          => 'admin@test.com',
             'amc_number'            => $params['amc_number'] ?? 'AMC75',
             'booking_date'          => $bookingDate,
-            'participation_date'    => '2007-01-09',
+            'participation_date'    => $params['participation_date'] ?? '2007-01-09',
             'participant_persons'   => rand(1, 100),
             'sales_price'           => '400',
             'booking_unit_price'    => '4',
@@ -324,14 +391,14 @@ class UpdateBookingTest extends TestCase
     }
 
     /**
-     * get url by paramters
+     * get url by id
      *
-     * @param array $params
+     * @param string $id
      * @return string
      */
-    private function getUrlByParams($params = [])
+    private function getUrlById($id)
     {
-        return is_array($params) && !empty($params) ? route('traveler.mypage.booking.edit', $params) : self::$url;
+        return route('traveler.mypage.booking.edit', [$id]);
     }
 
     /**
