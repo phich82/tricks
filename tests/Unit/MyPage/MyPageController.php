@@ -278,7 +278,7 @@ class MyPageController extends Controller
             $getPbf  = $getBookingApi->per_booking_fields ?? [];
             $getPpbf = $getBookingApi->per_participants_booking_fields ?? [];
 
-            #hotel info deadline
+            // hotel info deadline
             $getBookingApi->hotel_info_deadline = $plans->hotel_info_deadline ?? null;
 
             // get all per_bookings with response from per_booking_fields
@@ -295,7 +295,7 @@ class MyPageController extends Controller
                 return array_merge($carry, $out);
             }, []);
 
-            # get all unit names
+            // get all unit names
             $unitItemNames = collect($plans->price_information_items[0]->unit_items)->pluck('name', 'id')->all();
             //$unitItemNames = $this->getUnitNames($getActivityDetail->plans);
             
