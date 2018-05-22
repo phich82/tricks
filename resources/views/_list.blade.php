@@ -2,10 +2,10 @@
     <h1>Items List</h1>
     <ul>
         @foreach ($list as $item) 
-            <li>{{ $item['id'] }} - {{ $item['name'] }}
+            <li style="list-style: none;">{{ $item['id'] }} - {{ $item['name'] }}
                 @foreach ($perParticipants as $row)
                     @if ($row['id'] == $item['id'])
-                    <p><input type="text" value="{{ $row['total'] }}"</p>
+                    <p><input type="text" value="{{ $row['total'] }}" class="text-center"></p>
                     @endif
                 @endforeach
             </li>
